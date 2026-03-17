@@ -1,5 +1,9 @@
 # Repository Guidelines
 
+## Core Design Principle
+
+`vg` is to `rga` what `rga` is to `rg` — a wrapper, not a replacement. `vg` adds local vector semantic search on top of `rga`. All arguments except `--vg-*` pass through unchanged to `rga`/`rg`. Never break or bypass this pass-through contract.
+
 ## Project Structure & Module Organization
 This repository is a Rust 2024 workspace. Shared search, indexing, storage, and output logic lives in `crates/vg-core/src/`. CLI entrypoints live in `crates/vg-cli/src/main.rs` (`vg`) and `crates/vg-indexer/src/main.rs` (`vg-index`). Benchmarks live in `crates/vg-core/benches/`. Use `tests/fixtures/` for reusable sample files and keep longer-form design or test assets in `docs/`. `tests/integration/` is reserved for end-to-end cases that exercise the binaries.
 

@@ -355,6 +355,7 @@ fn extract_positionals(args: &[OsString]) -> Vec<String> {
 
     while index < args.len() {
         let arg = args[index].to_string_lossy().to_string();
+
         if treat_rest_as_positionals {
             positionals.push(arg);
             index += 1;
@@ -368,24 +369,22 @@ fn extract_positionals(args: &[OsString]) -> Vec<String> {
         }
 
         if let Some(option) = long_option_name(&arg) {
-            if passthrough_long_option_takes_value(option) && !arg.contains('=') {
-                index += 2;
-                continue;
-            }
-            index += 1;
+            let step = if passthrough_long_option_takes_value(option) && !arg.contains('=') {
+                2
+            } else {
+                1
+            };
+            index += step;
             continue;
         }
 
         if arg.starts_with('-') && arg.len() > 1 {
-            if short_option_has_attached_value(&arg) {
-                index += 1;
-                continue;
-            }
-            if passthrough_short_option_takes_value(&arg) {
-                index += 2;
-                continue;
-            }
-            index += 1;
+            let step = if passthrough_short_option_takes_value(&arg) && !short_option_has_attached_value(&arg) {
+                2
+            } else {
+                1
+            };
+            index += step;
             continue;
         }
 

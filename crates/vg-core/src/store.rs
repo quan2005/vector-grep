@@ -222,14 +222,9 @@ impl Store {
     pub fn scope_stats(&self, roots: &[PathBuf]) -> Result<ScopeStats> {
         let normalized = normalize_roots(roots)?;
         let records = self.list_files_in_scope(&normalized)?;
-        let files_total = records.len();
-        let chunks_total = records
-            .iter()
-            .map(|record| record.chunk_count as usize)
-            .sum::<usize>();
         Ok(ScopeStats {
-            files_total,
-            chunks_total,
+            files_total: records.len(),
+            chunks_total: records.iter().map(|r| r.chunk_count as usize).sum(),
         })
     }
 

@@ -32,10 +32,7 @@ pub fn search_json(args: &[OsString]) -> Result<Vec<SearchResult>> {
             continue;
         }
 
-        let data = match value.get("data") {
-            Some(data) => data,
-            None => continue,
-        };
+        let Some(data) = value.get("data") else { continue };
         let path = data
             .get("path")
             .and_then(|value| value.get("text"))
