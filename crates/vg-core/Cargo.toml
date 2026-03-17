@@ -1,0 +1,38 @@
+[package]
+name = "vg-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[features]
+default = ["progress-bar"]
+progress-bar = ["dep:indicatif"]
+
+[dependencies]
+anyhow.workspace = true
+blake3.workspace = true
+dirs.workspace = true
+fastembed.workspace = true
+hf-hub.workspace = true
+indicatif = { workspace = true, optional = true }
+ignore.workspace = true
+once_cell.workspace = true
+rayon.workspace = true
+rusqlite.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sqlite-vec.workspace = true
+tempfile.workspace = true
+termcolor.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+ureq.workspace = true
+
+[dev-dependencies]
+criterion.workspace = true
+serde_json.workspace = true
+
+[[bench]]
+name = "search_pipeline"
+harness = false
