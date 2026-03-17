@@ -11,13 +11,8 @@ pub struct TerminalReporter {
     embed_bar: Mutex<Option<ProgressBar>>,
 }
 
-impl TerminalReporter {
-    pub fn new() -> Self {
-        Self::default()
-    }
-}
-
 impl ProgressReporter for TerminalReporter {
+
     fn on_model_loading(&self, model_id: &str, description: &str) {
         let spinner = create_spinner(&format!("正在加载模型 {model_id} ({description})..."));
         *self

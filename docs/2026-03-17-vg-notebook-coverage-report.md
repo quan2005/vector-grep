@@ -18,7 +18,7 @@
 ## 测试方法
 
 - 测试入口：`cargo test -p vg-cli --test coverage_comparison -- --ignored --nocapture`
-- 语料目录：`/Users/francis/Projects/github/notebook`
+- 语料目录：本地 notebook 目录（`~/Projects/github/notebook`）
 - 输出 JSON：`.context/coverage_report.notebook.json`
 - `vg` 语义查询走 `--vg-semantic`
 - 同义词查询走默认 hybrid
@@ -86,12 +86,10 @@
 
 ## 产物
 
-- JSON 原始结果：`/Users/francis/conductor/workspaces/vector-grep/west-monroe/.context/coverage_report.notebook.json`
-- 本报告：`/Users/francis/conductor/workspaces/vector-grep/west-monroe/docs/2026-03-17-vg-notebook-coverage-report.md`
+- JSON 原始结果：`.context/coverage_report.notebook.json`
+- 本报告：`docs/2026-03-17-vg-notebook-coverage-report.md`
 
-## 建议
+## 后续建议
 
-如果后续要把这份结果用于 CI 或对外演示，建议下一步做两件事：
-
-1. 在索引层彻底隔离损坏文档和预处理失败，不要让单文件拖垮整轮 hybrid benchmark
-2. 增加一组更“硬”的同义词 query，专门覆盖 `error` 这类英文技术词，以便更真实地衡量 `vg` 在强关键词场景下的短板
+1. 索引层隔离损坏文档：`rga-preproc` 单文件失败不应中断整轮 hybrid benchmark。
+2. 补充英文技术词同义词组（如 `error handling` vs `错误处理`），以便更真实地衡量 `vg` 在强关键词场景下的短板。

@@ -226,10 +226,10 @@ pub fn normalize_roots(paths: &[PathBuf]) -> Result<Vec<PathBuf>> {
         return Ok(vec![std::env::current_dir().context("读取当前目录失败")?]);
     }
 
-    let mut normalized = Vec::with_capacity(paths.len());
-    for path in paths {
-        normalized.push(make_absolute(path)?);
-    }
+    let mut normalized = paths
+        .iter()
+        .map(|path| make_absolute(path))
+        .collect::<Result<Vec<_>>>()?;
     normalized.sort();
     normalized.dedup();
     if normalized.is_empty() {

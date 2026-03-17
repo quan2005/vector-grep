@@ -42,7 +42,7 @@ impl ProgressReporter for NoopReporter {
 pub fn default_reporter() -> Box<dyn ProgressReporter> {
     #[cfg(feature = "progress-bar")]
     {
-        Box::new(TerminalReporter::new())
+        Box::new(TerminalReporter::default())
     }
 
     #[cfg(not(feature = "progress-bar"))]

@@ -144,10 +144,7 @@ impl Embedder {
                 model.embed(docs, None)
             }
             EmbedBackend::Ollama(ollama) => {
-                let docs = passages
-                    .iter()
-                    .map(|content| content.trim().to_string())
-                    .collect::<Vec<_>>();
+                let docs = passages.iter().map(|content| content.trim().to_string()).collect::<Vec<_>>();
                 ollama.embed_texts(&docs)
             }
         }
@@ -397,14 +394,9 @@ fn collect_external_initializer_files(repo_info: &RepoInfo) -> Vec<String> {
     let mut files = repo_info
         .siblings
         .iter()
-        .filter_map(|sibling| {
-            let file = sibling.rfilename.as_str();
-            if file.starts_with("onnx/") && file.ends_with(".onnx_data") {
-                Some(file.to_string())
-            } else {
-                None
-            }
-        })
+        .map(|s| s.rfilename.as_str())
+        .filter(|f| f.starts_with("onnx/") && f.ends_with(".onnx_data"))
+        .map(str::to_string)
         .collect::<Vec<_>>();
     files.sort();
     files.dedup();
