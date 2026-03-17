@@ -1,0 +1,5 @@
+{
+  "model_id": "qwen3-embedding:0.6b",
+  "model_dimensions": 0,
+  "pooling": "mean"
+}

@@ -1,0 +1,97 @@
+# vg vs rg 真实 Notebook 覆盖度对比报告
+
+日期：2026-03-17
+
+## 结论
+
+在真实语料 `~/Projects/github/notebook` 上，`vg` 的总体覆盖度明显高于纯 `rg`：
+
+- 总命中：`vg 210` vs `rg 60`
+- `vg_only_hits`：`196`
+- 相对提升：`+326.7%`
+
+但这不是“所有 query 全胜”。
+
+- 语义查询 `3/3` 全部是 `vg` 明显占优，`rg` 为 `0`
+- 同义词查询 `3` 条中，`2` 条 `vg` 占优，`1` 条 `rg` 反而更多
+
+## 测试方法
+
+- 测试入口：`cargo test -p vg-cli --test coverage_comparison -- --ignored --nocapture`
+- 语料目录：`/Users/francis/Projects/github/notebook`
+- 输出 JSON：`.context/coverage_report.notebook.json`
+- `vg` 语义查询走 `--vg-semantic`
+- 同义词查询走默认 hybrid
+- 命中指标：按“命中文件数”统计，不做人工相关性标注
+
+本次真实语料跑数时，发现 hybrid 内部的 `rga` 会被坏 PDF 中断，因此测试对“文本侧”补了最小规避：
+
+- 仅对文本检索传入 `--glob !*.pdf`
+- 仅对文本检索传入 `--glob !*.pptx`
+
+这样做的含义是：
+
+- `rg` 侧仍然代表纯文本关键词能力
+- `vg` 的语义侧仍然覆盖整份 notebook
+- 避免单个损坏的二进制文档让整轮 benchmark 失败
+
+## 分项结果
+
+| 查询 | 类型 | vg 命中 | rg 命中 | 净差值 |
+| --- | --- | ---: | ---: | ---: |
+| AI工具对工作流程的影响 | 语义 | 37 | 0 | +37 |
+| 如何处理项目中的技术债务 | 语义 | 38 | 0 | +38 |
+| 团队协作中的沟通问题 | 语义 | 39 | 0 | +39 |
+| 认证授权 vs auth | 同义词 | 36 | 20 | +16 |
+| 错误处理 vs error | 同义词 | 32 | 35 | -3 |
+| 性能优化 vs performance | 同义词 | 28 | 5 | +23 |
+
+## 关键观察
+
+### 1. 语义查询优势非常稳定
+
+三个中文语义查询里，`rg` 全部为 `0`，`vg` 分别命中 `37/38/39` 个文件。这说明在真实笔记库里，只靠关键词无法覆盖“工作流影响”“技术债务”“沟通问题”这类概念性提问，而 `vg` 的语义召回已经能稳定打出结果。
+
+### 2. 同义词查询总体仍然是 `vg` 更强
+
+`认证授权 vs auth`：`vg 36` vs `rg 20`
+
+- `vg` 额外命中了不少中文语境文档，例如：
+  - `2511/15-沙盒服务.md`
+  - `2511/15-知识库服务.md`
+  - `2511/15-MCP-App设计文档模板.md`
+
+`性能优化 vs performance`：`vg 28` vs `rg 5`
+
+- `vg` 对“性能优化”这类偏概念表达有更强的中文召回能力，优势比较明显
+
+### 3. `错误处理 vs error` 是一个反例
+
+这一组里 `rg` 更高：`35` vs `32`。
+
+这说明当前 `vg` 的混合检索并不是对所有同义词都天然占优，至少在 `error` 这个英文技术词上，纯关键词匹配仍然很强，甚至更强。这个反例应该保留在对外材料里，避免把 benchmark 讲成“全量碾压”。
+
+### 4. 冷启动成本高，且暴露了多格式文本侧稳定性问题
+
+第一次真实语料运行在第 4 条查询上失败，耗时 `1732.04s`。直接原因不是语义侧，而是 hybrid 内部 `rga-preproc` 处理损坏 PDF 时退出，错误文件是：
+
+- `/Users/francis/Projects/github/notebook/2601/11-提问能力提升完全指南-图示版.pdf`
+
+加上文本侧 `pdf/pptx` 过滤后，基于已建立 cache 的完整 rerun 耗时 `17.19s` 并成功产出结果。
+
+这说明：
+
+- `vg` 在真实知识库上的“结果质量”优势成立
+- 但“首次全量索引 + 多格式文本抽取”的运行成本和稳定性，仍然是实际落地需要单独治理的问题
+
+## 产物
+
+- JSON 原始结果：`/Users/francis/conductor/workspaces/vector-grep/west-monroe/.context/coverage_report.notebook.json`
+- 本报告：`/Users/francis/conductor/workspaces/vector-grep/west-monroe/docs/2026-03-17-vg-notebook-coverage-report.md`
+
+## 建议
+
+如果后续要把这份结果用于 CI 或对外演示，建议下一步做两件事：
+
+1. 在索引层彻底隔离损坏文档和预处理失败，不要让单文件拖垮整轮 hybrid benchmark
+2. 增加一组更“硬”的同义词 query，专门覆盖 `error` 这类英文技术词，以便更真实地衡量 `vg` 在强关键词场景下的短板
