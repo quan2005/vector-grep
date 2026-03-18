@@ -109,7 +109,7 @@ pub fn run_cli(raw_args: &[OsString]) -> Result<i32> {
                 &mut embedder,
                 query,
                 &args.paths,
-                args.top_k.max(25),
+                args.top_k,
                 args.threshold,
             )?;
             let text = text_handle

@@ -20,6 +20,11 @@ use crate::{
 };
 
 const EMBED_PASSAGE_BATCH_SIZE: usize = 16;
+/// Chunks whose content (after trimming) is shorter than this threshold are
+/// too short to carry useful semantic signal and are excluded from the index.
+/// This prevents template/footer lines (e.g. "*下次更新: 根据实际进展动态调整*")
+/// from producing noisy vectors that match arbitrary queries.
+const MIN_CHUNK_CHARS: usize = 30;
 
 #[derive(Debug, Clone)]
 pub struct SyncReport {
@@ -262,7 +267,11 @@ fn prepare_file(
     };
 
     let splitter = ChunkSplitter::new(splitter_config);
-    let chunks = splitter.split(&text);
+    let chunks: Vec<_> = splitter
+        .split(&text)
+        .into_iter()
+        .filter(|chunk| chunk.content.chars().count() >= MIN_CHUNK_CHARS)
+        .collect();
     if chunks.is_empty() {
         return Ok(PreparedAction::Remove {
             path: path.to_string_lossy().to_string(),
