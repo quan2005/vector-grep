@@ -1,0 +1,72 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  release:
+    runs-on: macos-15
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin
+
+      - name: Build release binaries
+        run: cargo build --locked --release --target aarch64-apple-darwin -p vg-cli -p vg-indexer
+
+      - name: Package release archive
+        id: package
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME}"
+          ARCHIVE="vg-${VERSION}-aarch64-apple-darwin.tar.gz"
+          tar czf "${ARCHIVE}" -C target/aarch64-apple-darwin/release vg vg-index
+          SHA="$(shasum -a 256 "${ARCHIVE}" | awk '{print $1}')"
+          echo "archive=${ARCHIVE}" >> "${GITHUB_OUTPUT}"
+          echo "sha=${SHA}" >> "${GITHUB_OUTPUT}"
+
+      - name: Create GitHub Release
+        run: |
+          set -euo pipefail
+          gh release create "${GITHUB_REF_NAME}" "${{ steps.package.outputs.archive }}" \
+            --title "${GITHUB_REF_NAME}" \
+            --generate-notes
+
+      - name: Update Homebrew tap formula
+        env:
+          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME}"
+          ARCHIVE="${{ steps.package.outputs.archive }}"
+          SHA="${{ steps.package.outputs.sha }}"
+
+          git clone https://github.com/quan2005/homebrew-vg
+          cd homebrew-vg
+
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+
+          perl -pi -e "s|url \".*\"|url \"https://github.com/quan2005/vector-grep/releases/download/${VERSION}/${ARCHIVE}\"|" Formula/vg.rb
+          perl -pi -e "s|sha256 \".*\"|sha256 \"${SHA}\"|" Formula/vg.rb
+          perl -pi -e "s|version \".*\"|version \"${VERSION#v}\"|" Formula/vg.rb
+
+          git add Formula/vg.rb
+          if git diff --cached --quiet; then
+            echo "Formula already up to date"
+            exit 0
+          fi
+
+          git commit -m "vg ${VERSION}"
+          git remote set-url origin "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/quan2005/homebrew-vg"
+          git push

@@ -14,6 +14,10 @@ vg-core = { path = "../vg-core" }
 serde.workspace = true
 serde_json.workspace = true
 
+[[bin]]
+name = "vg"
+path = "src/main.rs"
+
 [[test]]
 name = "coverage_comparison"
 path = "../../tests/integration/coverage_comparison.rs"

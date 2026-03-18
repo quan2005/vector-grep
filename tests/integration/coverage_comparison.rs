@@ -127,7 +127,7 @@ fn compare_coverage() -> Result<()> {
     let corpus = resolve_corpus_path()?;
     let output_path = resolve_output_path()?;
     let cache_path = resolve_cache_path()?;
-    let vg_binary = PathBuf::from(env!("CARGO_BIN_EXE_vg-cli"));
+    let vg_binary = PathBuf::from(env!("CARGO_BIN_EXE_vg"));
 
     let mut query_reports = Vec::with_capacity(QUERY_CASES.len());
     for case in QUERY_CASES {
@@ -193,10 +193,10 @@ fn run_vg(
     command.arg("--vg-cache-path").arg(cache_path);
     command.arg(case.vg_query).arg(corpus);
 
-    let output = command.output().context("执行 vg-cli 覆盖度对比失败")?;
+    let output = command.output().context("执行 vg 覆盖度对比失败")?;
     if !output.status.success() {
         bail!(
-            "vg-cli 执行失败 (query: {}):\nstdout:\n{}\nstderr:\n{}",
+            "vg 执行失败 (query: {}):\nstdout:\n{}\nstderr:\n{}",
             case.vg_query,
             String::from_utf8_lossy(&output.stdout),
             String::from_utf8_lossy(&output.stderr),
@@ -204,7 +204,7 @@ fn run_vg(
     }
 
     let response: VgResponse =
-        serde_json::from_slice(&output.stdout).context("解析 vg-cli JSON 输出失败")?;
+        serde_json::from_slice(&output.stdout).context("解析 vg JSON 输出失败")?;
     Ok(response
         .results
         .into_iter()

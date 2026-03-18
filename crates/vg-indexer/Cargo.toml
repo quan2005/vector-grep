@@ -9,3 +9,7 @@ authors.workspace = true
 anyhow.workspace = true
 tracing-subscriber.workspace = true
 vg-core = { path = "../vg-core" }
+
+[[bin]]
+name = "vg-index"
+path = "src/main.rs"

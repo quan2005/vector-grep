@@ -17,6 +17,34 @@
 - `rusqlite` + `sqlite-vec`：向量与元数据统一存储
 - `ignore`：遵循 `.gitignore` 的文件遍历
 
+## Homebrew 安装（macOS Apple Silicon）
+
+```bash
+brew tap quan2005/vg
+brew install vg
+```
+
+如需显式指定 tap，可使用：
+
+```bash
+brew install quan2005/vg/vg
+```
+
+升级：
+
+```bash
+brew upgrade vg
+```
+
+首次运行时，`fastembed` 会自动把 ONNX 模型下载到 `~/.cache/vg/`，无需额外初始化步骤。
+
+维护者发版方式：
+
+```bash
+git tag v0.1.0
+git push --tags
+```
+
 ## 快速开始
 
 ```bash
