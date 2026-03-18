@@ -17,7 +17,9 @@
 - `rusqlite` + `sqlite-vec`：向量与元数据统一存储
 - `ignore`：遵循 `.gitignore` 的文件遍历
 
-## Homebrew 安装（macOS Apple Silicon）
+## 安装（macOS Apple Silicon）
+
+当前官方分发方式是 Homebrew，自定义 tap 为 `quan2005/vg`。通过 Homebrew 安装时，`ripgrep-all` 会作为依赖一并安装。
 
 ```bash
 brew tap quan2005/vg
@@ -36,16 +38,111 @@ brew install quan2005/vg/vg
 brew upgrade vg
 ```
 
-首次运行时，`fastembed` 会自动把 ONNX 模型下载到 `~/.cache/vg/`，无需额外初始化步骤。
-
-维护者发版方式：
+安装完成后可先确认两个命令都在：
 
 ```bash
-git tag v0.1.0
-git push --tags
+vg --help
+vg-index --help
 ```
 
-## 快速开始
+## 使用教程
+
+### 1. 第一次使用会发生什么
+
+首次运行 `vg` 或 `vg-index` 时，`fastembed` 会自动把 ONNX 模型下载到 `~/.cache/vg/`。第一次会比后续运行慢一些，属于正常现象。
+
+### 2. 最快上手：直接 hybrid 搜索
+
+`vg` 默认就是 hybrid 模式，会同时结合 `rga` 文本搜索和本地向量语义搜索：
+
+```bash
+vg "OAuth2 token" ./docs
+```
+
+适合你已经有一个关键词，但又希望结果能带上一些语义相关内容。
+
+### 3. 纯语义搜索
+
+当你没有精确关键词，只有“想找什么”的自然语言描述时，用 `--vg-semantic`：
+
+```bash
+vg --vg-semantic "用户认证和权限控制" ./docs
+```
+
+### 4. 纯文本透传
+
+如果你只想把 `vg` 当作 `rga` 包装层，完全走文本搜索：
+
+```bash
+vg --vg-text "OAuth2" ./docs
+```
+
+这时行为会尽量贴近直接执行 `rga`。
+
+### 5. 只建索引，不搜索
+
+如果你想提前把索引建好，或者单独刷新索引：
+
+```bash
+vg-index ./docs
+```
+
+也可以用主命令：
+
+```bash
+vg --vg-index-only ./docs
+```
+
+### 6. 查看索引状态
+
+```bash
+vg --vg-index-stats ./docs
+```
+
+适合确认缓存目录、索引条数和当前模型配置是否符合预期。
+
+### 7. 常见实用命令
+
+输出 JSON，方便脚本消费：
+
+```bash
+vg --vg-json --vg-semantic "错误处理策略" ./docs
+```
+
+显示上下文：
+
+```bash
+vg --vg-context 2 "OAuth2 token" ./docs
+```
+
+强制重建索引：
+
+```bash
+vg --vg-rebuild --vg-semantic "用户认证" ./docs
+```
+
+指定缓存目录：
+
+```bash
+vg --vg-cache-path /tmp/vg-cache --vg-semantic "性能优化" ./docs
+```
+
+### 8. 一个推荐的日常使用方式
+
+```bash
+# 先预热索引
+vg-index ~/work/my-project
+
+# 然后直接做 hybrid 搜索
+vg "用户登录失败后的重试逻辑" ~/work/my-project
+
+# 需要更偏语义时切到 semantic
+vg --vg-semantic "订单取消后的补偿处理" ~/work/my-project
+```
+
+## 开发调试
+
+如果你是在仓库源码里本地调试，而不是安装 release 版本，可用下面这些命令：
 
 ```bash
 # hybrid 搜索
@@ -56,6 +153,13 @@ cargo run -p vg-cli -- --vg-semantic "用户认证" ./tests/fixtures
 
 # 仅建索引
 cargo run -p vg-indexer -- ./tests/fixtures
+```
+
+## 维护者发版
+
+```bash
+git tag v0.1.0
+git push --tags
 ```
 
 ## 参数
