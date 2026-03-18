@@ -3,8 +3,8 @@ use std::collections::HashMap;
 use crate::search::{SearchResult, SearchSource};
 
 const RRF_K: f32 = 60.0;
-const TEXT_WEIGHT: f32 = 1.0;
-const VECTOR_WEIGHT: f32 = 1.15;
+const TEXT_WEIGHT: f32 = 1.5;
+const VECTOR_WEIGHT: f32 = 1.0;
 
 pub fn fuse_results(
     text_results: Vec<SearchResult>,

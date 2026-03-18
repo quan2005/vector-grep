@@ -8,10 +8,10 @@ use anyhow::{Context, Result, anyhow, bail};
 use serde::{Deserialize, Serialize};
 
 const DEFAULT_TOP_K: usize = 10;
-const DEFAULT_THRESHOLD: f32 = 0.3;
+const DEFAULT_THRESHOLD: f32 = 0.5;
 const DEFAULT_CHUNK_SIZE: usize = 512;
 const DEFAULT_CHUNK_OVERLAP: usize = 64;
-const DEFAULT_CONTEXT: usize = 0;
+const DEFAULT_CONTEXT: usize = 1;
 const DEFAULT_MODEL_ID: &str = "bge-small-zh";
 const DEFAULT_MODEL_DIMENSIONS: usize = 512;
 const DEFAULT_POOLING: &str = "mean";
