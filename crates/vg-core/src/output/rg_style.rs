@@ -127,7 +127,8 @@ fn render_vector_teaser(result: &SearchResult) -> String {
 }
 
 fn should_render_line_range_prefix(result: &SearchResult, body: &str) -> bool {
-    !(result.text_hit && body.contains(" | "))
+    let _ = result;
+    !body.contains('\n')
 }
 
 fn semantic_marker_body(marker: &str, body: &str) -> String {
@@ -318,6 +319,28 @@ mod tests {
         };
 
         let body = format_result_body(&result, 1);
+        assert!(!should_render_line_range_prefix(&result, &body));
+    }
+
+    #[test]
+    fn semantic_teaser_hides_outer_line_range_prefix() {
+        let result = SearchResult {
+            file_path: PathBuf::from("notes.md"),
+            start_line: 8,
+            end_line: 14,
+            score: 0.92,
+            content: concat!(
+                "第一段围绕营销管理展开说明，包含用户洞察、品牌定位、渠道策略与复盘节奏。",
+                "第二段继续补充消费者需求、竞品分析、增长策略与执行路径。",
+                "第三段描述组织协同、指标拆解和长期节奏。"
+            )
+            .to_string(),
+            source: SearchSource::Vector,
+            text_hit: false,
+            vector_hit: true,
+        };
+
+        let body = format_result_body(&result, 2);
         assert!(!should_render_line_range_prefix(&result, &body));
     }
 }
