@@ -32,7 +32,9 @@ pub fn search_json(args: &[OsString]) -> Result<Vec<SearchResult>> {
             continue;
         }
 
-        let Some(data) = value.get("data") else { continue };
+        let Some(data) = value.get("data") else {
+            continue;
+        };
         let path = data
             .get("path")
             .and_then(|value| value.get("text"))
@@ -59,6 +61,8 @@ pub fn search_json(args: &[OsString]) -> Result<Vec<SearchResult>> {
             score: 0.0,
             content,
             source: SearchSource::Text,
+            text_hit: true,
+            vector_hit: false,
         });
     }
 

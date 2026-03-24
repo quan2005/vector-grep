@@ -22,7 +22,7 @@ pub struct ChunkConfig {
 impl Default for ChunkConfig {
     fn default() -> Self {
         Self {
-            chunk_size_tokens: 512,
+            chunk_size_tokens: 300,
             chunk_overlap_tokens: 64,
             max_chunks_per_file: 1_000,
         }

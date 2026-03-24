@@ -1,4 +1,5 @@
 pub mod hybrid;
+pub(crate) mod query_bridge;
 pub mod text;
 pub mod vector;
 
@@ -22,6 +23,10 @@ pub struct SearchResult {
     pub score: f32,
     pub content: String,
     pub source: SearchSource,
+    #[serde(skip_serializing)]
+    pub text_hit: bool,
+    #[serde(skip_serializing)]
+    pub vector_hit: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]

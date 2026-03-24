@@ -25,6 +25,8 @@ fn bench_hybrid_fusion(criterion: &mut Criterion) {
             score: 0.0,
             content: format!("text result {index}"),
             source: SearchSource::Text,
+            text_hit: true,
+            vector_hit: false,
         })
         .collect::<Vec<_>>();
     let vector = (0..500)
@@ -35,6 +37,8 @@ fn bench_hybrid_fusion(criterion: &mut Criterion) {
             score: 0.8,
             content: format!("vector result {index}"),
             source: SearchSource::Vector,
+            text_hit: false,
+            vector_hit: true,
         })
         .collect::<Vec<_>>();
 

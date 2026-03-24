@@ -144,7 +144,10 @@ impl Embedder {
                 model.embed(docs, None)
             }
             EmbedBackend::Ollama(ollama) => {
-                let docs = passages.iter().map(|content| content.trim().to_string()).collect::<Vec<_>>();
+                let docs = passages
+                    .iter()
+                    .map(|content| content.trim().to_string())
+                    .collect::<Vec<_>>();
                 ollama.embed_texts(&docs)
             }
         }

@@ -26,8 +26,10 @@ pub fn fuse_results(
         merged
             .entry(key)
             .and_modify(|existing| {
+                existing.text_hit |= result.text_hit;
+                existing.vector_hit |= result.vector_hit;
                 if existing.content.len() < result.content.len() {
-                    *existing = result.clone();
+                    existing.content = result.content.clone();
                 }
             })
             .or_insert(result);
@@ -76,6 +78,8 @@ mod tests {
             score: 0.0,
             content: "auth".to_string(),
             source: SearchSource::Text,
+            text_hit: true,
+            vector_hit: false,
         }];
         let vector = vec![SearchResult {
             file_path: PathBuf::from("a.rs"),
@@ -84,10 +88,14 @@ mod tests {
             score: 0.9,
             content: "auth implementation".to_string(),
             source: SearchSource::Vector,
+            text_hit: false,
+            vector_hit: true,
         }];
         let fused = fuse_results(text, vector, 10);
         assert_eq!(fused.len(), 1);
         assert_eq!(fused[0].source, SearchSource::Hybrid);
         assert!(fused[0].score > 0.0);
+        assert!(fused[0].text_hit);
+        assert!(fused[0].vector_hit);
     }
 }

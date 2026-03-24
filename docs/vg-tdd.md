@@ -124,6 +124,9 @@ query -> embedding -> sqlite-vec KNN
  -> top_k -> 输出
 ```
 
+- 默认语义分块大小为 `300` token，`chunk_overlap` 保持 `64`。
+- 向量命中的终端展示不直接复用整段 chunk，而是由 teaser 渲染进一步压缩到更短的预览行。
+
 ### 4.3 hybrid 搜索
 
 ```

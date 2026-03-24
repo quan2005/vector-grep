@@ -179,7 +179,7 @@ vg [VG OPTIONS] [RGA OPTIONS] [RG OPTIONS] PATTERN [PATH ...]
 | `--vg-rebuild` | 强制重建索引 |
 | `--vg-no-cache` | 使用临时缓存目录 |
 | `--vg-cache-path <P>` | 自定义缓存目录 |
-| `--vg-chunk-size <N>` | 分块大小，单位 token（默认 512） |
+| `--vg-chunk-size <N>` | 分块大小，单位 token（默认 300） |
 | `--vg-chunk-overlap <N>` | 分块重叠（默认 64） |
 | `--vg-list-models` | 列出 fastembed 内置模型 |
 | `--vg-json` | 输出 JSON |

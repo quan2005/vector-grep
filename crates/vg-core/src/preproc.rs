@@ -9,8 +9,8 @@ use std::{
 use anyhow::{Context, Result};
 
 const DIRECT_TEXT_EXTENSIONS: &[&str] = &[
-    "c", "cc", "cpp", "css", "csv", "go", "h", "hpp", "java", "js", "json", "jsx", "kt",
-    "md", "py", "rb", "rs", "scala", "sh", "sql", "svg", "toml", "ts", "tsx", "txt", "xml", "yaml",
+    "c", "cc", "cpp", "css", "csv", "go", "h", "hpp", "java", "js", "json", "jsx", "kt", "md",
+    "py", "rb", "rs", "scala", "sh", "sql", "svg", "toml", "ts", "tsx", "txt", "xml", "yaml",
     "yml",
 ];
 
@@ -39,6 +39,37 @@ pub fn extract_text(path: &Path) -> Result<Option<String>> {
         let text = filter_preproc_noise(&raw);
         if !text.is_empty() {
             return Ok(Some(text));
+        }
+    }
+
+    Ok(None)
+}
+
+pub fn extract_display_lines(path: &Path) -> Result<Option<Vec<String>>> {
+    if should_read_directly(path) {
+        return read_utf8(path).map(|text| Some(text.lines().map(str::to_string).collect()));
+    }
+
+    if !prefers_preproc(path) && looks_like_utf8(path)? {
+        return read_utf8(path).map(|text| Some(text.lines().map(str::to_string).collect()));
+    }
+
+    let output = Command::new("rga-preproc")
+        .arg(path)
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null())
+        .output()
+        .with_context(|| format!("调用 rga-preproc 失败: {}", path.display()))?;
+
+    if output.status.success() && !output.stdout.is_empty() {
+        let raw = String::from_utf8_lossy(&output.stdout);
+        let lines = raw
+            .lines()
+            .map(strip_page_prefix_keep_empty)
+            .map(str::to_string)
+            .collect::<Vec<_>>();
+        if !lines.is_empty() {
+            return Ok(Some(lines));
         }
     }
 
@@ -89,54 +120,74 @@ fn filter_preproc_noise(text: &str) -> String {
     lines.join("\n").trim().to_string()
 }
 
+fn strip_page_prefix_keep_empty(line: &str) -> &str {
+    parse_page_prefixed_content(line).unwrap_or(line)
+}
+
 /// If `line` starts with `Page N: `, return the content after the prefix.
 /// If the line does not match the pattern, return it unchanged (Some(line)).
 /// Returns None only for lines that are *only* a page marker with no real content.
 fn strip_page_prefix(line: &str) -> Option<&str> {
-    let Some(after_page) = line.strip_prefix("Page ") else {
-        return Some(line);
-    };
+    match parse_page_prefixed_content(line) {
+        Some("") => None,
+        Some(content) => Some(content),
+        None => Some(line),
+    }
+}
 
-    // Find the `: ` separator after the page number
-    let Some(colon_pos) = after_page.find(": ") else {
-        // "Page N:" with nothing after — discard
-        let trimmed = after_page.trim_end_matches(':').trim();
-        if trimmed.parse::<u64>().is_ok() {
-            return None;
-        }
-        return Some(line);
-    };
-
-    let number_part = &after_page[..colon_pos];
+fn parse_page_prefixed_content(line: &str) -> Option<&str> {
+    let after_page = line.strip_prefix("Page ")?;
+    let (number_part, rest) = after_page.split_once(':')?;
     if number_part.trim().parse::<u64>().is_ok() {
-        // Valid "Page N: content" — return just the content
-        Some(&after_page[colon_pos + 2..])
+        Some(rest.trim_start_matches(' '))
     } else {
-        // Not a real page prefix (e.g. "Page views: 100") — keep as-is
-        Some(line)
+        None
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{filter_preproc_noise, strip_page_prefix};
+    use super::{filter_preproc_noise, strip_page_prefix, strip_page_prefix_keep_empty};
 
     #[test]
     fn strip_prefix_extracts_content() {
-        assert_eq!(strip_page_prefix("Page 13: some content"), Some("some content"));
+        assert_eq!(
+            strip_page_prefix("Page 13: some content"),
+            Some("some content")
+        );
         assert_eq!(strip_page_prefix("Page 1: 比亚迪股份"), Some("比亚迪股份"));
     }
 
     #[test]
     fn strip_prefix_discards_empty_page_line() {
         assert_eq!(strip_page_prefix("Page 13:"), None);
-        assert_eq!(strip_page_prefix("Page 5: "), Some(""));
+        assert_eq!(strip_page_prefix("Page 5: "), None);
+    }
+
+    #[test]
+    fn strip_prefix_keep_empty_preserves_alignment() {
+        assert_eq!(strip_page_prefix_keep_empty("Page 13:"), "");
+        assert_eq!(strip_page_prefix_keep_empty("Page 5: "), "");
+        assert_eq!(
+            strip_page_prefix_keep_empty("Page 7: line content"),
+            "line content"
+        );
+        assert_eq!(
+            strip_page_prefix_keep_empty("Page views: 1000"),
+            "Page views: 1000"
+        );
     }
 
     #[test]
     fn strip_prefix_keeps_non_page_lines() {
-        assert_eq!(strip_page_prefix("Some normal line"), Some("Some normal line"));
-        assert_eq!(strip_page_prefix("Page views: 1000"), Some("Page views: 1000"));
+        assert_eq!(
+            strip_page_prefix("Some normal line"),
+            Some("Some normal line")
+        );
+        assert_eq!(
+            strip_page_prefix("Page views: 1000"),
+            Some("Page views: 1000")
+        );
     }
 
     #[test]

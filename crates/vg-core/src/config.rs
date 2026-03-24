@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 
 const DEFAULT_TOP_K: usize = 10;
 const DEFAULT_THRESHOLD: f32 = 0.5;
-const DEFAULT_CHUNK_SIZE: usize = 512;
+const DEFAULT_CHUNK_SIZE: usize = 300;
 const DEFAULT_CHUNK_OVERLAP: usize = 64;
 const DEFAULT_CONTEXT: usize = 1;
 const DEFAULT_MODEL_ID: &str = "bge-small-zh";
@@ -289,7 +289,7 @@ pub fn usage(bin_name: &str) -> String {
   --vg-no-cache          使用临时缓存目录
   --vg-rebuild           强制重建索引
   --vg-cache-path <P>    自定义缓存目录
-  --vg-chunk-size <N>    分块大小（默认 512）
+  --vg-chunk-size <N>    分块大小（默认 300）
   --vg-chunk-overlap <N> 分块重叠（默认 64）
 
 输出:
@@ -379,7 +379,9 @@ fn extract_positionals(args: &[OsString]) -> Vec<String> {
         }
 
         if arg.starts_with('-') && arg.len() > 1 {
-            let step = if passthrough_short_option_takes_value(&arg) && !short_option_has_attached_value(&arg) {
+            let step = if passthrough_short_option_takes_value(&arg)
+                && !short_option_has_attached_value(&arg)
+            {
                 2
             } else {
                 1
@@ -521,6 +523,12 @@ mod tests {
         let args = vec![OsString::from("--vg-model=bge-m3")];
         let error = SplitArgs::parse(&args).expect_err("error");
         assert!(error.to_string().contains("--vg-model 已移除"));
+    }
+
+    #[test]
+    fn parse_uses_new_default_chunk_size() {
+        let parsed = SplitArgs::parse(&[OsString::from("query")]).expect("parse");
+        assert_eq!(parsed.chunk_size, 300);
     }
 
     #[test]

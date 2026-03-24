@@ -1,5 +1,6 @@
 mod json;
 mod rg_style;
+pub(crate) mod vector_teaser;
 
 use anyhow::Result;
 
